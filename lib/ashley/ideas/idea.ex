@@ -38,6 +38,12 @@ defmodule Ashley.Ideas.Idea do
     update_timestamp :updated_at
   end
 
+  relationships do
+    has_one :board, Ashley.Kanban.Board do
+      destination_attribute :idea_id
+    end
+  end
+
   actions do
     defaults [:read, :destroy]
 
@@ -60,18 +66,34 @@ defmodule Ashley.Ideas.Idea do
           title: String.slice(idea.prompt, 0, 40) <> "...",
           cards: [
             %{title: "Define core resources", description: "Create Idea, Board, Card resources", status: "todo"},
-            %{title: "Implement xAI breakdown", description: "Connect to xAI Grok API", status: "todo"}
+            %{title: "Implement xAI breakdown", description: "Connect to xAI Grok API", status: "todo"},
+            %{title: "Build LiveView page", description: "Create the interactive Kanban UI", status: "todo"},
+            %{title: "Add drag-and-drop", description: "Make cards reorderable", status: "todo"}
           ]
         }
 
+        # Create Board + Cards
+        board = Ashley.Kanban.Board.create!(%{idea_id: idea.id})
+
+        Enum.with_index(breakdown.cards, fn card, i ->
+          Ashley.Kanban.Card.create!(%{
+            board_id: board.id,
+            title: card.title,
+            description: card.description,
+            status: String.to_atom(card.status),
+            order: i
+          })
+        end)
+
+        # Bulletproof update using changeset
         changeset = Ash.Changeset.for_update(idea, :update, %{
           title: breakdown.title,
           breakdown: breakdown,
           status: :broken_down
         })
 
-        updated = Ash.update!(changeset)
-        {:ok, updated}   # ← THIS WAS THE MISSING PIECE
+        updated_idea = Ash.update!(changeset)
+        {:ok, updated_idea}
       end
     end
   end

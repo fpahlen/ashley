@@ -10,7 +10,7 @@ import Config
 config :ashley,
   ecto_repos: [Ashley.Repo],
   generators: [timestamp_type: :utc_datetime],
-  ash_domains: [Ashley.Ideas]
+  ash_domains: [Ashley.Kanban, Ashley.Ideas]
 
 # Configures the endpoint
 config :ashley, AshleyWeb.Endpoint,
